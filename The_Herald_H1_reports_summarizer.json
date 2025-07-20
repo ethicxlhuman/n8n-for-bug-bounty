@@ -1,0 +1,134 @@
+{
+  "name": "H1 reports",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        208
+      ],
+      "id": "bedea6c7-e283-4339-9b7f-dd1d1bcf8016",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9X33EcTu2Vxq1AUX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Makes a request to \n```\nhttps://hackerone.com/reports/<hackerone-report-id>.json\n```\nexample:\n\nhttps://hackerone.com/reports/312543.json\nhttps://hackerone.com/reports/342543.json",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        864,
+        208
+      ],
+      "id": "ce8f1868-70e3-4b0a-8e6c-6078359b7d9e",
+      "name": "GET H1 report"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hey!\n\nSend your report's link down below",
+        "options": {
+          "customCss": "/* Font Import (place in your <head>) */\n@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code&display=swap');\n\n:root {\n  /* 🎨 Color Palette - Minimal + Elegant */\n  --chat--color-primary: #e74266;\n  --chat--color-primary-shade-50: #d63b5d;\n  --chat--color-primary-shade-100: #c73352;\n  --chat--color-secondary: #20b69e;\n  --chat--color-secondary-shade-50: #1ca08a;\n\n  --chat--color-white: #ffffff;\n  --chat--color-light: #f9fafb;\n  --chat--color-light-shade-50: #e5e7eb;\n  --chat--color-light-shade-100: #d1d5db;\n  --chat--color-medium: #9ca3af;\n  --chat--color-dark: #111827;\n  --chat--color-muted: #6b7280;\n\n  /* Fonts & Sizing */\n  --chat--font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n  --chat--code-font: 'Fira Code', monospace;\n  --chat--font-size: 1rem;\n\n  /* Layout & Spacing */\n  --chat--spacing: 1rem;\n  --chat--border-radius: 0.75rem;\n  --chat--transition-duration: 0.25s;\n\n  /* Window */\n  --chat--window--width: 420px;\n  --chat--window--height: 620px;\n  --chat--window--box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);\n\n  /* Header */\n  --chat--header--background: var(--chat--color-dark);\n  --chat--header--color: var(--chat--color-white);\n  --chat--heading--font-size: 1.4rem;\n\n  /* Message Bubbles */\n  --chat--message--font-size: 1rem;\n  --chat--message--padding: 0.85rem 1rem;\n  --chat--message--border-radius: 0.75rem;\n  --chat--message--bot--background: var(--chat--color-white);\n  --chat--message--bot--color: var(--chat--color-dark);\n  --chat--message--user--background: var(--chat--color-secondary);\n  --chat--message--user--color: var(--chat--color-white);\n\n  /* Input */\n  --chat--input--background: var(--chat--color-white);\n  --chat--input--text-color: var(--chat--color-dark);\n  --chat--input--border: 1px solid var(--chat--color-light-shade-100);\n  --chat--input--border-radius: 0.75rem;\n  --chat--input--placeholder: var(--chat--color-muted);\n\n  /* Code Blocks */\n  --chat--code--background: #111827;\n  --chat--code--text: #f9fafb;\n}\n\n/* 🪟 Chat Window */\n.chat-window {\n  width: var(--chat--window--width);\n  height: var(--chat--window--height);\n  background: var(--chat--color-light);\n  box-shadow: var(--chat--window--box-shadow);\n  border-radius: var(--chat--border-radius);\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  font-family: var(--chat--font-family);\n  -webkit-font-smoothing: antialiased;\n}\n\n/* 🧠 Header */\n.chat-header {\n  background: var(--chat--header--background);\n  color: var(--chat--header--color);\n  padding: var(--chat--spacing);\n  font-size: var(--chat--heading--font-size);\n  font-weight: 600;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n\n/* 📜 Message Container */\n.chat-messages {\n  flex: 1;\n  padding: var(--chat--spacing);\n  overflow-y: auto;\n  background: var(--chat--color-light);\n}\n\n/* 💬 Message Bubbles */\n.chat-message {\n  max-width: 75%;\n  padding: var(--chat--message--padding);\n  border-radius: var(--chat--message--border-radius);\n  margin-bottom: 0.75rem;\n  font-size: var(--chat--message--font-size);\n  line-height: 1.5;\n  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);\n  word-break: break-word;\n  transition: 0.2s ease-in-out;\n}\n\n.chat-message.bot {\n  background: var(--chat--message--bot--background);\n  color: var(--chat--message--bot--color);\n  align-self: flex-start;\n}\n\n.chat-message.user {\n  background: var(--chat--message--user--background);\n  color: var(--chat--message--user--color);\n  align-self: flex-end;\n}\n\n/* 🧑‍💻 Code Block Styling - Enhanced Visibility */\n.chat-message pre {\n  box-sizing: border-box;\n  display: block;\n  font-family: var(--chat--code-font), monospace;\n  font-size: 0.9rem; /* Slightly larger font */\n  line-height: 1.6; /* More spacing */\n  background: #f8f8f8; /* Dark but not pure black */\n  color: #333; /* Light gray for better readability */\n  padding: 1rem;\n  border-radius: 0.5rem;\n  margin-top: 0.75rem;\n  white-space: pre-wrap;\n  word-break: break-word;\n  overflow-x: auto;\n  border: 1px solid #ddd; /* Subtle border */\n  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);\n}\n\n/* Label above code blocks - More visible */\n.chat-message pre::before {\n  content: \"payload\";\n  display: block;\n  font-size: 0.8rem;\n  color: #666;\n  margin-bottom: 0.75rem;\n  font-weight: 600;\n  letter-spacing: 0.5px;\n}\n\n/* Syntax highlighting colors (example) */\n.chat-message pre .keyword { color: #569cd6; } /* Blue for keywords */\n.chat-message pre .string { color: #ce9178; } /* Orange for strings */\n.chat-message pre .comment { color: #6a9955; } /* Green for comments */\n.chat-message pre .number { color: #b5cea8; } /* Light green for numbers */\n\n/* Improved scrollbar */\n.chat-message pre::-webkit-scrollbar {\n  height: 8px; /* Thicker scrollbar */\n  background-color: #2a2a2a;\n}\n.chat-message pre::-webkit-scrollbar-thumb {\n  background: #5a5a5a;\n  border-radius: 4px;\n}\n\n/* ✍️ Typing Indicator */\n.chat-typing {\n  color: var(--chat--color-muted);\n  font-style: italic;\n  margin-top: 0.5rem;\n  animation: blink 1s infinite;\n}\n@keyframes blink {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.4; }\n}\n\n/* ⌨️ Input Footer */\n.chat-input-area {\n  display: flex;\n  padding: var(--chat--spacing);\n  border-top: 1px solid var(--chat--color-light-shade-100);\n  background: var(--chat--color-white);\n}\n\n.chat-input {\n  flex: 1;\n  font-family: var(--chat--font-family);\n  font-size: var(--chat--font-size);\n  background: var(--chat--input--background);\n  color: var(--chat--input--text-color);\n  border: var(--chat--input--border);\n  border-radius: var(--chat--input--border-radius);\n  padding: 0.75rem 1rem;\n}\n.chat-input::placeholder {\n  color: var(--chat--input--placeholder);\n}\n\n/* 📤 Send Button */\n.chat-send-btn {\n  margin-left: 0.75rem;\n  background: var(--chat--color-primary);\n  color: var(--chat--color-white);\n  border: none;\n  border-radius: var(--chat--border-radius);\n  padding: 0.75rem 1rem;\n  cursor: pointer;\n  transition: background 0.2s ease-in-out;\n}\n.chat-send-btn:hover {\n  background: var(--chat--color-primary-shade-50);\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "0e7065ce-f2aa-416d-9488-dbffa4bb0f67",
+      "name": "When chat message received",
+      "webhookId": "0ffa61ef-4e16-43f7-a57b-7e103047dc9f"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=You are an expert AI assistant designed for a high-level bug bounty hunter. Your task is to extract and summarize only **unique, high-impact technical insights** from security reports, not general summaries.\n\nTool Calling:\n\n* Before you write anything you must:\n* Call the tool `GET H1 report` exactly once, passing the full URL you received.\n* Parse the returned JSON for report contents (they would be in JSON)\n\nFocus your analysis on:\n- New payloads, edge-case techniques, or chaining methods\n- Root cause analysis with practical pentesting value\n- Workflow insights that save time or increase discovery\n- Snippets that can be reused or adapted (code, diffs, commands)\n- CVSS/impact context only if it reflects real-world exploitation potential\n\nYour tone is concise, factual, and tailored for advanced hunters. Do not include background explanations or definitions.\n\nFormat the output as:\n\n1. **Summary** (1–2 sentence BLUF)\n2. **Techniques**:\n   - *Name*: Short tag for the finding (e.g., SSRF via PDF render)\n   - *Context*: Where/how the bug was triggered\n   - *Technique*: Raw payload, code, diff, or steps\n   - *Impact*: What the attacker could achieve\n3. **Pro Tip** (optional): A short insight that can be reused elsewhere\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "5f51af95-aa06-43f8-b7c9-c5ff5a4298cb",
+      "name": "H1 report summarizer"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "H1 report summarizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET H1 report": {
+      "ai_tool": [
+        [
+          {
+            "node": "H1 report summarizer",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "H1 report summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "H1 report summarizer": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a3561677-feeb-4255-8875-883ac03bebaa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c5257b5cf4d48704d636909c07c4408a69d6799d0a855eab46287eeb702c84b0"
+  },
+  "id": "GQvrSUkdvgHiSl4W",
+  "tags": [
+    {
+      "createdAt": "2025-07-07T03:11:18.909Z",
+      "updatedAt": "2025-07-07T03:11:18.909Z",
+      "id": "B57Byrk0DBYk6h5Q",
+      "name": "The Herald"
+    }
+  ]
+}
