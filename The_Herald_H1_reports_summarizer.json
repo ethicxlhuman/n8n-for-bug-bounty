@@ -74,15 +74,80 @@
       "name": "H1 report summarizer"
     },
     {
-      "parameters": {},
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
+      "parameters": {
+        "content": "## 🎯 WORKFLOW PURPOSE\n\nConverts HackerOne report URLs into actionable security insights for bug bounty hunters.\n\n**INPUT**: H1 report URL (e.g., hackerone.com/reports/123456.json)\n**OUTPUT**: Structured technical analysis with payloads & techniques",
+        "height": 208,
+        "width": 376,
+        "color": 4
+      },
+      "id": "61f8445f-7789-44ea-8ed8-edd54eba19d7",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
       "position": [
-        736,
-        208
-      ],
-      "id": "53909584-1aa9-4e58-a4f3-0f8b861d5499",
-      "name": "Simple Memory"
+        1168,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 📨 CHAT INTERFACE\n\n**Setup Required**:\n- Deploy webhook publicly\n- Send H1 URLs ending in .json\n- Custom CSS for pentester theme\n\n**Format**: https://hackerone.com/reports/ID",
+        "height": 204,
+        "width": 352
+      },
+      "id": "19e3ab93-8027-423d-bc98-5d21eb66db2a",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🧠 Main Agent\n\n**Requires**: Google Gemini API key\n\n**Purpose**: \n- Orchestrates analysis workflow\n- Calls HTTP tool automatically\n- Formats output for hunters",
+        "height": 200,
+        "width": 268
+      },
+      "id": "56c29618-9568-4b8c-aeff-81cfb820bd1f",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🔧 GEMINI LLM\n\n**Config**: Use gemini-2.5-pro\n**Auth**: Google PaLM API credentials\n\n**Note**: Can substitute with other models if needed",
+        "height": 196,
+        "width": 248
+      },
+      "id": "3cb80e59-054b-4d8f-8786-e63595b888ec",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 📡 HTTP FETCHER\n\n**Target**: HackerOne JSON API\n**Method**: GET request\n**Security**: No hardcoded credentials\n\n**Auto-called** by AI agent with URL from chat",
+        "height": 200,
+        "width": 264
+      },
+      "id": "f0e4251b-f830-47a9-8709-63b37472f9ff",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        912,
+        368
+      ]
     }
   ],
   "pinData": {},
@@ -124,24 +189,13 @@
       "main": [
         []
       ]
-    },
-    "Simple Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "H1 report summarizer",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "9b56e574-59c6-4521-b0fa-e28bbc1e45ba",
+  "versionId": "8fbd7882-d242-44cd-a45c-ef598ba294d8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "c5257b5cf4d48704d636909c07c4408a69d6799d0a855eab46287eeb702c84b0"
