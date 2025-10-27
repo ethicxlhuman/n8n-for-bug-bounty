@@ -1,0 +1,1072 @@
+{
+  "id": "BgWrCjOVnYcGcZRV",
+  "meta": {
+    "instanceId": "c5257b5cf4d48704d636909c07c4408a69d6799d0a855eab46287eeb702c84b0"
+  },
+  "name": "etxHackerOne Scope Monitor",
+  "tags": [
+    {
+      "id": "xw4nMru5tzSUTx4M",
+      "name": "prototype",
+      "createdAt": "2025-06-24T03:45:29.608Z",
+      "updatedAt": "2025-06-24T03:45:29.608Z"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "50577698-a1de-4d3c-ae7e-3451103a56c6",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3856,
+        -672
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 308,
+        "height": 224,
+        "content": "## ⚙️ Data Sync\n- Runs automatically every 20 minutes to keep data fresh.  \n- Fetches and aggregates HackerOne program data using GraphQL batching.  \n- Normalizes and merges results for clean downstream processing.  \n- Ensures local database stays aligned with live HackerOne data.\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ab47d6c4-e7b9-478a-be52-b3262e1e010b",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        192,
+        -656
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 372,
+        "height": 192,
+        "content": "## 📢 Notifications & Reporting\n- Sends structured Discord alerts summarizing new programs and scope updates.  \n- Includes handle, direct link, and old vs. new scope version details.  \n- Provides instant visibility for researchers tracking program scope evolution."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "47c1ef02-f003-4280-85f7-c419fcb2326f",
+      "name": "Pagination Setup (100-300)",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -3040,
+        -880
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bcd40a85-48f9-4050-ba7e-2684c0ddb0a2",
+              "name": "numbers",
+              "type": "array",
+              "value": "={{ Array.from({ length: 3 }, (_, i) => (i+1) * 100) }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "2b0cbc61-434d-480c-90ef-4d0b3713bc12",
+      "name": "Split Pagination Values",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        -2848,
+        -880
+      ],
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": "numbers"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "fb08e007-d84d-445f-a796-82d976cec600",
+      "name": "Fetch HackerOne Programs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -2608,
+        -720
+      ],
+      "parameters": {
+        "url": "https://hackerone.com/graphql",
+        "method": "POST",
+        "options": {
+          "response": {
+            "response": {}
+          },
+          "allowUnauthorizedCerts": true
+        },
+        "jsonBody": "={\n  \"operationName\": \"DiscoveryQuery\",\n  \"query\": \"query DiscoveryQuery($query: OpportunitiesQuery!, $filter: QueryInput!, $from: Int, $size: Int, $sort: [SortInput!]) {\\n  opportunities_search(query: $query, filter: $filter, from: $from, size: $size, sort: $sort) {\\n    nodes {\\n      ... on OpportunityDocument {\\n        handle\\n      }\\n    }\\n  }\\n}\",\n  \"variables\": {\n    \"query\": {},\n    \"filter\": {\n      \"bool\": {\n        \"filter\": [\n          {\n            \"bool\": {\n              \"must_not\": {\n                \"term\": {\n                  \"team_type\": \"Engagements::Assessment\"\n                }\n              }\n            }\n          },\n          {\n            \"term\": {\n              \"offers_bounties\": true\n            }\n          }\n        ]\n      }\n    },\n    \"from\": {{ $json.numbers }},\n    \"size\": 100,\n    \"sort\": [\n      {\n        \"field\": \"launched_at\",\n        \"direction\": \"DESC\"\n      }\n    ]\n  }\n}",
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Host",
+              "value": "hackerone.com"
+            },
+            {
+              "name": "Content-Length",
+              "value": "584"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+            }
+          ]
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "a656f20b-4cb3-42c2-8e87-4a9d07384d3b",
+      "name": "Merge Program Data",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -2400,
+        -880
+      ],
+      "parameters": {},
+      "typeVersion": 3.2
+    },
+    {
+      "id": "42e8c78c-3db0-4022-b215-9c62509dd289",
+      "name": "Extract Program Handles",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -2208,
+        -880
+      ],
+      "parameters": {
+        "jsCode": "// Get the input data\nconst items = $input.all();\n\n// Initialize an array to store all handles\nconst handles = [];\n\n// Loop through each input item\nfor (const item of items) {\n  const nodes = item.json.data.opportunities_search.nodes;\n\n  // Extract handles and push them into the handles array\n  for (const node of nodes) {\n    handles.push(node.handle);\n  }\n}\n\n// Return a single output item with the handles array\nreturn [\n  {\n    json: {\n      handles\n    }\n  }\n];\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "727497c8-88bc-4f80-82c8-42a8eec0d020",
+      "name": "Extract Scope Versions",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1520,
+        -880
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const team = item.json.data.team;\n  const handle = team.handle;\n  const latest_scope_version_id = team.structured_scope_versions.edges[0]?.node?.id || null;\n\n  return {\n    json: {\n      handle,\n      latest_scope_version_id\n    }\n  };\n});"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "b2dbf1f2-aa15-4f7e-b909-483411e31c91",
+      "name": "Split Program Handles",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        -1968,
+        -880
+      ],
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": "handles"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ae802211-3a3c-4fdf-9c7d-062e14c6125b",
+      "name": "Compare with Database",
+      "type": "n8n-nodes-base.compareDatasets",
+      "position": [
+        -1008,
+        -656
+      ],
+      "parameters": {
+        "options": {},
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "handle",
+              "field2": "handle"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.3
+    },
+    {
+      "id": "26ff9024-3683-490f-bf68-fa1d6bdb3302",
+      "name": "Get Existing Programs",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        -2240,
+        -304
+      ],
+      "parameters": {
+        "tableId": "hackerone-programs",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "3JbeTDFdmOJXtsJR",
+          "name": "john supabase | nahamsec"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "7d6a128b-c92c-4504-bcce-d24bffd87d0a",
+      "name": "Prepare DB Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -2000,
+        -304
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ee3772ed-3a57-4232-805f-89dc9fa10e41",
+              "name": "handle",
+              "type": "string",
+              "value": "={{ $json.program_name }}"
+            },
+            {
+              "id": "dda1f4ff-6469-4cf8-88d8-2083b6cb7061",
+              "name": "latest_scope_version_id",
+              "type": "string",
+              "value": "={{ $json.latest_scope_version_id }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "1288fb92-48ec-4dcb-91b0-9a7c5b7427f1",
+      "name": "Update Scope Version",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        -496,
+        -800
+      ],
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "program_name",
+              "keyValue": "={{ $json.keys.handle }}",
+              "condition": "eq"
+            }
+          ]
+        },
+        "tableId": "hackerone-programs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "latest_scope_version_id",
+              "fieldValue": "={{ $json.different.latest_scope_version_id.inputA }}"
+            }
+          ]
+        },
+        "operation": "update"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "3JbeTDFdmOJXtsJR",
+          "name": "john supabase | nahamsec"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e0366125-e55c-4659-8856-a9821a428a60",
+      "name": "Schedule Trigger (20min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -3424,
+        -608
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 20
+            }
+          ]
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "783b3128-7392-4a70-b1c2-92f3eb8203eb",
+      "name": "Get Scope Versions",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1744,
+        -880
+      ],
+      "parameters": {
+        "url": "https://hackerone.com/graphql",
+        "method": "POST",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 5000
+            }
+          }
+        },
+        "jsonBody": "={\n  \"operationName\": \"ScopeVersionQuery\",\n  \"variables\": {\n    \"handle\": \"{{ $json.handles }}\"\n  },\n  \"query\": \"query ScopeVersionQuery($handle: String!) {\\n  team(handle: $handle) {\\n          handle\\n    structured_scope_versions(first: 1) {\\n      edges {\\n        node {\\n          id\\n          created_at\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"\n}",
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "c4e8beae-976e-4ece-a0fa-223fc2dc826f",
+      "name": "Create New Program",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        -512,
+        -1376
+      ],
+      "parameters": {
+        "tableId": "hackerone-programs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "program_name",
+              "fieldValue": "={{ $json.handle }}"
+            },
+            {
+              "fieldId": "latest_scope_version_id",
+              "fieldValue": "={{ $json.latest_scope_version_id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "3JbeTDFdmOJXtsJR",
+          "name": "john supabase | nahamsec"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ab9f26ee-7bdd-4016-b39c-64c87daa81f0",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        -1296,
+        -880
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "cd629163-11a9-4335-a121-5cb9ec33c34f",
+      "name": "Discord New Program Alert",
+      "type": "n8n-nodes-base.discord",
+      "position": [
+        -272,
+        -1120
+      ],
+      "webhookId": "894c380b-33e4-4053-ac37-ef0df0b19a34",
+      "parameters": {
+        "content": "=# **🗽 NEW HackerOne Program ADDED**\n\n**Program:** {{ $json.handle }}\n\n**Scope Version:** {{ $json.latest_scope_version_id }}",
+        "options": {
+          "avatar_url": "https://cdn.theorg.com/21070d4f-a207-44e3-9212-22c2e1497205_thumb.jpg"
+        },
+        "authentication": "webhook"
+      },
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "dlUJMSl5jrn0dkj5",
+          "name": "Hackerone Shoten"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "2fc88f3c-557a-4f44-9156-83678debd969",
+      "name": "Extract Handle for Lookup",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -656,
+        -48
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9f77fc4-f039-48ba-9fb7-4c10e3e96a56",
+              "name": "handle",
+              "type": "string",
+              "value": "={{ $json.keys.handle }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "8c475871-e4ae-4586-bf5b-ef738818f54a",
+      "name": "Fetch Updated Scope Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -368,
+        -160
+      ],
+      "parameters": {
+        "url": "https://hackerone.com/graphql",
+        "method": "POST",
+        "options": {},
+        "jsonBody": "={\n  \"operationName\": \"getProgramScopes\",\n  \"variables\": {\n    \"handle\": \"{{ $json.handle }}\"\n  },\n  \"query\": \"query getProgramScopes($handle: String!, $after: String) {\\n  team(handle: $handle) {\\n    handle\\n    structured_scopes(first: 100, after: $after, archived: false) {\\n      nodes {\\n        asset_identifier\\n        asset_type\\n        eligible_for_submission\\n        eligible_for_bounty\\n        max_severity\\n        instruction\\n      }\\n    }\\n  }\\n}\"\n}",
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "8db57224-2dc0-4592-a25b-7ffe7e25620a",
+      "name": "Get Previous Scope",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        -368,
+        112
+      ],
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "program_name",
+              "keyValue": "={{ $json.handle }}"
+            }
+          ]
+        },
+        "tableId": "hackerone-programs",
+        "operation": "get"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "3JbeTDFdmOJXtsJR",
+          "name": "john supabase | nahamsec"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "0031e201-e154-40f8-b9eb-12eb1888c491",
+      "name": "Prepare Previous Scope",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -176,
+        112
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a41d24b7-f89d-471b-a88f-f9ffa3ea547c",
+              "name": "handle",
+              "type": "string",
+              "value": "={{ $json.program_name }}"
+            },
+            {
+              "id": "ffdcd8fa-a2eb-4e01-9cde-c1a1fb96f5fa",
+              "name": "inscope",
+              "type": "array",
+              "value": "={{ $json.inscope }}"
+            },
+            {
+              "id": "75e39faf-d42e-405c-be3a-4b3b00a44ec9",
+              "name": "outofscope",
+              "type": "array",
+              "value": "={{ $json.outofscope }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "30d4ce85-17a6-4fcc-94c6-96b445ff73e8",
+      "name": "Compare Scope Changes",
+      "type": "n8n-nodes-base.compareDatasets",
+      "position": [
+        272,
+        -48
+      ],
+      "parameters": {
+        "options": {},
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "handle",
+              "field2": "handle"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.3
+    },
+    {
+      "id": "ca0bb14e-1d9b-4a2b-a372-7bf51db086a9",
+      "name": "Update Program Scope",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        672,
+        -144
+      ],
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "program_name",
+              "keyValue": "={{ $json.keys.handle }}",
+              "condition": "eq"
+            }
+          ]
+        },
+        "tableId": "hackerone-programs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "inscope",
+              "fieldValue": "={{ $json.different.inscope.inputA }}"
+            },
+            {
+              "fieldId": "outofscope",
+              "fieldValue": "={{ $json.different.outofscope.inputA }}"
+            }
+          ]
+        },
+        "operation": "update"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "3JbeTDFdmOJXtsJR",
+          "name": "john supabase | nahamsec"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "bf30e082-2245-47f8-b2de-8b0ec7fe2520",
+      "name": "Process Scope Changes",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        672,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\nconst handle = input.keys?.handle || 'unknown';\n\n// Normalize utility\nconst normalize = (s) =>\n  s?.toLowerCase()\n    .replace(/\\u200B/g, '')\n    .replace(/[“”\"']/g, '')\n    .replace(/[()]+$/, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\nconst normalizeList = (list) =>\n  Array.isArray(list) ? [...new Set(list.map(normalize))] : [];\n\nconst inscopeA = normalizeList(input?.different?.inscope?.inputA || []);\nconst inscopeB = normalizeList(input?.different?.inscope?.inputB || []);\nconst outofscopeA = normalizeList(input?.different?.outofscope?.inputA || []);\nconst outofscopeB = normalizeList(input?.different?.outofscope?.inputB || []);\n\n// Only check for ADDITIONS\nconst inscope_added = inscopeA.filter(x => !inscopeB.includes(x));\nconst outofscope_added = outofscopeA.filter(x => !outofscopeB.includes(x));\n\nif (!inscope_added.length && !outofscope_added.length) {\n  return []; // Silent skip if nothing meaningful was added\n}\n\nreturn [\n  {\n    json: {\n      program_name: handle,\n      inscope_added: inscope_added.sort(),\n      outofscope_added: outofscope_added.sort()\n    }\n  }\n];"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "51dd2fda-4dc3-48d5-b569-b1ccc5a23724",
+      "name": "Parallel Fetch Programs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -2608,
+        -1040
+      ],
+      "parameters": {
+        "url": "https://hackerone.com/graphql",
+        "method": "POST",
+        "options": {
+          "response": {
+            "response": {}
+          },
+          "allowUnauthorizedCerts": true
+        },
+        "jsonBody": "{\n  \"operationName\": \"DiscoveryQuery\",\n  \"query\": \"query DiscoveryQuery($query: OpportunitiesQuery!, $filter: QueryInput!, $from: Int, $size: Int, $sort: [SortInput!]) {\\n  opportunities_search(query: $query, filter: $filter, from: $from, size: $size, sort: $sort) {\\n    nodes {\\n      ... on OpportunityDocument {\\n        handle\\n      }\\n    }\\n  }\\n}\",\n  \"variables\": {\n    \"query\": {},\n    \"filter\": {\n      \"bool\": {\n        \"filter\": [\n          {\n            \"bool\": {\n              \"must_not\": {\n                \"term\": {\n                  \"team_type\": \"Engagements::Assessment\"\n                }\n              }\n            }\n          },\n          {\n            \"term\": {\n              \"offers_bounties\": true\n            }\n          }\n        ]\n      }\n    },\n    \"from\": 0,\n    \"size\": 100,\n    \"sort\": [\n      {\n        \"field\": \"launched_at\",\n        \"direction\": \"DESC\"\n      }\n    ]\n  }\n}",
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Host",
+              "value": "hackerone.com"
+            },
+            {
+              "name": "Content-Length",
+              "value": "582"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+            }
+          ]
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "3cdc31f4-3a13-4b42-b835-adcc9661184d",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1968,
+        -1280
+      ],
+      "parameters": {
+        "width": 352,
+        "height": 256,
+        "content": "## 🧠 Scope Monitoring\n- Extracts each program’s scope version and removes duplicates.  \n- Compares latest scope data with stored records to detect:  \n  🔹 New program launches  \n  🔹 Scope version updates  \n  🔹 Removed or revoked scopes  \n- Updates database entries and categorizes all detected changes."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "7983fb1e-b079-4c85-8be6-eb9ff3c39ddf",
+      "name": "Format Scope Update Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -160,
+        -160
+      ],
+      "parameters": {
+        "jsCode": "// Collect all input data\nconst inputData = items.map(item => item.json.data);\n\nconst results = [];\n\nfor (const data of inputData) {\n\tconst team = data?.team;\n\tif (!team) continue;\n\n\tconst handle = team.handle || '';\n\tconst inscope = new Set();\n\tconst outofscope = new Set();\n\n\tconst nodes = team.structured_scopes?.nodes || [];\n\tfor (const asset of nodes) {\n\t\tconst id = asset.asset_identifier?.trim();\n\t\tif (!id) continue;\n\n\t\tif (asset.eligible_for_bounty === true) {\n\t\t\tinscope.add(id);\n\t\t} else {\n\t\t\toutofscope.add(id);\n\t\t}\n\t}\n\n\tresults.push({\n\t\thandle,\n\t\tinscope: Array.from(inscope).sort(),\n\t\toutofscope: Array.from(outofscope).sort()\n\t});\n}\n\nreturn results.map(r => ({ json: r }));"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "91b71092-42bb-4366-acd9-94a77191d02f",
+      "name": "Program Scope Update",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -528,
+        -528
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10ccd513-e685-4729-953b-e25fcea0a755",
+              "name": "program_name",
+              "type": "string",
+              "value": "={{ $json.keys.handle }}"
+            },
+            {
+              "id": "88220ac6-e1cd-4fb2-b767-42e459beff65",
+              "name": "keys.handle",
+              "type": "string",
+              "value": "=https://hackerone.com/{{ $json.keys.handle }}/scope_versions"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "c85329df-8e0e-43aa-8b71-1647b9c566a1",
+      "name": "Discord SCOPE-VERSION Alert",
+      "type": "n8n-nodes-base.discord",
+      "position": [
+        -272,
+        -528
+      ],
+      "webhookId": "39b357db-4578-4f56-a4b6-13924b096984",
+      "parameters": {
+        "content": "=# **㊙️ SCOPE-VERSION Changed**\n\n**Program:** `{{ $json.program_name }}`\n\n**Scope Version:** {{ $json.keys.handle }}\n\n",
+        "options": {
+          "avatar_url": "https://cdn.theorg.com/21070d4f-a207-44e3-9212-22c2e1497205_thumb.jpg"
+        },
+        "authentication": "webhook"
+      },
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "dlUJMSl5jrn0dkj5",
+          "name": "Hackerone Shoten"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "ee04e05c-7aaf-4b44-9300-fc552987f6e4",
+      "name": "Discord In-Scope Update Alert",
+      "type": "n8n-nodes-base.discord",
+      "position": [
+        880,
+        160
+      ],
+      "webhookId": "bc408f98-3dfd-4492-bd09-ebb1aa78c693",
+      "parameters": {
+        "content": "=# **🛡️ Program Updated**\n\n**Program:** {{ $json.program_name }}\n\n**Scope_Version**: https://hackerone.com/{{ $json.program_name }}/scope_versions\n\n{{ $json.inscope_added.length > 0 ? \"**🟢 In-Scope Added:**\\n\" + $json.inscope_added.map(i => `<${i}>`).join(\"\\n\") + \"\\n\" : \"\" }}\n{{ $json.outofscope_added.length > 0 ? \"**🔴 Out-of-Scope Added:**\\n\" + $json.outofscope_added.map(i => `<${i}>`).join(\"\\n\") : \"\" }}",
+        "options": {
+          "avatar_url": "https://cdn.theorg.com/21070d4f-a207-44e3-9212-22c2e1497205_thumb.jpg"
+        },
+        "authentication": "webhook"
+      },
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "dlUJMSl5jrn0dkj5",
+          "name": "Hackerone Shoten"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "309d6ad0-fe8e-464f-8588-24644ea66393",
+      "name": "Format New Program Alert1",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -448,
+        -1120
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "77a1b6ec-cae5-4500-8c9d-58b6c41b42fc",
+              "name": "handle",
+              "type": "string",
+              "value": "={{ $json.keys.handle }}"
+            },
+            {
+              "id": "df1d61cc-06f4-4892-9a0c-45da42ffacc6",
+              "name": "latest_scope_version_id",
+              "type": "string",
+              "value": "=https://hackerone.com/{{ $json.keys.handle }}/policy_scopes"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1cd6a775-e874-4948-ad96-72898435503a",
+  "connections": {
+    "Prepare DB Data": {
+      "main": [
+        [
+          {
+            "node": "Compare with Database",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Compare with Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Previous Scope": {
+      "main": [
+        [
+          {
+            "node": "Prepare Previous Scope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Scope Versions": {
+      "main": [
+        [
+          {
+            "node": "Extract Scope Versions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Program Data": {
+      "main": [
+        [
+          {
+            "node": "Extract Program Handles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Program Scope Update": {
+      "main": [
+        [
+          {
+            "node": "Discord SCOPE-VERSION Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Scope Changes": {
+      "main": [
+        [],
+        [],
+        [
+          {
+            "node": "Update Program Scope",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Process Scope Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare with Database": {
+      "main": [
+        [
+          {
+            "node": "Create New Program",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "Extract Handle for Lookup",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Scope Version",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Program Scope Update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format New Program Alert1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Programs": {
+      "main": [
+        [
+          {
+            "node": "Prepare DB Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Scope Changes": {
+      "main": [
+        [
+          {
+            "node": "Discord In-Scope Update Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Program Handles": {
+      "main": [
+        [
+          {
+            "node": "Get Scope Versions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Scope Versions": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Previous Scope": {
+      "main": [
+        [
+          {
+            "node": "Compare Scope Changes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Program Handles": {
+      "main": [
+        [
+          {
+            "node": "Split Program Handles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parallel Fetch Programs": {
+      "main": [
+        [
+          {
+            "node": "Merge Program Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Pagination Values": {
+      "main": [
+        [
+          {
+            "node": "Fetch HackerOne Programs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parallel Fetch Programs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HackerOne Programs": {
+      "main": [
+        [
+          {
+            "node": "Merge Program Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Format Scope Update Data": {
+      "main": [
+        [
+          {
+            "node": "Compare Scope Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (20min)": {
+      "main": [
+        [
+          {
+            "node": "Pagination Setup (100-300)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Existing Programs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Handle for Lookup": {
+      "main": [
+        [
+          {
+            "node": "Get Previous Scope",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Updated Scope Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format New Program Alert1": {
+      "main": [
+        [
+          {
+            "node": "Discord New Program Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagination Setup (100-300)": {
+      "main": [
+        [
+          {
+            "node": "Split Pagination Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Updated Scope Details": {
+      "main": [
+        [
+          {
+            "node": "Format Scope Update Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
