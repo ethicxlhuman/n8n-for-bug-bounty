@@ -1,0 +1,367 @@
+{
+  "name": "etxNuclei Template Generator - from CVE/POC",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "etxNuclei Template Generator",
+        "formDescription": "Generate security testing templates from CVE and POC",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "CVE ID",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "CVE description",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "POC",
+              "fieldType": "file",
+              "acceptFileTypes": ".py, .txt, .sh",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "customCss": ":root {\n\t--font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\t--font-size-body: 12px;\n\t--font-size-label: 14px;\n\t--font-size-test-notice: 12px;\n\t--font-size-input: 14px;\n\t--font-size-header: 20px;\n\t--font-size-paragraph: 14px;\n\t--font-size-link: 12px;\n\t--font-size-error: 12px;\n\t--font-size-html-h1: 28px;\n\t--font-size-html-h2: 20px;\n\t--font-size-html-h3: 16px;\n\t--font-size-html-h4: 14px;\n\t--font-size-html-h5: 12px;\n\t--font-size-html-h6: 10px;\n\t--font-size-subheader: 14px;\n\n\t/* Colors - Clean Minimal */\n\t--color-background: #f5f5f5;\n\t--color-test-notice-text: #666666;\n\t--color-test-notice-bg: #ffffff;\n\t--color-test-notice-border: #e0e0e0;\n\t--color-card-bg: #ffffff;\n\t--color-card-border: #e0e0e0;\n\t--color-card-shadow: rgba(0, 0, 0, 0.04);\n\t--color-link: #0066cc;\n\t--color-header: #333333;\n\t--color-label: #555555;\n\t--color-input-border: #d0d0d0;\n\t--color-input-text: #333333;\n\t--color-focus-border: #0066cc;\n\t--color-submit-btn-bg: #007bff;\n\t--color-submit-btn-text: #ffffff;\n\t--color-error: #dc3545;\n\t--color-required: #dc3545;\n\t--color-clear-button-bg: #6c757d;\n\t--color-html-text: #555555;\n\t--color-html-link: #0066cc;\n\t--color-header-subtext: #777777;\n\n\t/* Border Radii */\n\t--border-radius-card: 8px;\n\t--border-radius-input: 6px;\n\t--border-radius-clear-btn: 50%;\n\t--card-border-radius: 8px;\n\n\t/* Spacing */\n\t--padding-container-top: 24px;\n\t--padding-card: 32px;\n\t--padding-test-notice-vertical: 12px;\n\t--padding-test-notice-horizontal: 24px;\n\t--margin-bottom-card: 16px;\n\t--padding-form-input: 14px;\n\t--card-padding: 32px;\n\t--card-margin-bottom: 16px;\n\n\t/* Dimensions */\n\t--container-width: 448px;\n\t--submit-btn-height: 48px;\n\t--checkbox-size: 18px;\n\n\t/* Others */\n\t--box-shadow-card: 0px 2px 8px 0px var(--color-card-shadow);\n\t--opacity-placeholder: 0.6;\n}"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        416
+      ],
+      "id": "918b5263-9231-43f4-8626-2a1e100d45d8",
+      "name": "Form Submission Trigger",
+      "webhookId": "nuclei-template-gen-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "POC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        416
+      ],
+      "id": "3aaa9e8e-f73c-4114-9283-72e31e778a37",
+      "name": "Extract POC Content"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f226944-a542-49f5-8fcc-e1ef45e44429",
+              "name": "cve_id",
+              "value": "={{ $('Form Submission Trigger').item.json['CVE ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "6c9706f0-5950-4622-bbb4-8d73b1aef460",
+              "name": "cve_description",
+              "value": "={{ $('Form Submission Trigger').item.json['CVE description'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1fb1a366-a6e7-4e7e-866b-d2bc688c02cd",
+              "name": "poc",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        416
+      ],
+      "id": "f57c1128-3d00-4739-8f37-b15d23a37b73",
+      "name": "Prepare Template Data"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        640
+      ],
+      "id": "1b6f9337-2e0e-45af-8a96-6730fa44440b",
+      "name": "Google Gemini AI Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9X33EcTu2Vxq1AUX",
+          "name": "Google Gemini Cheekymisa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7942a01e-b450-4ef5-bd4e-a730bec0c4ed",
+              "name": "template",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1456,
+        416
+      ],
+      "id": "18be511e-380e-4af0-a2d3-80438bc98c21",
+      "name": "Extract Generated Template"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and validate the generated Nuclei template\ntry {\n  const items = $input.all();\n\n  return items.map(item => {\n    let template = item.json.template;\n    \n    // Remove markdown code fences if present\n    template = template.replace(/^```yaml\\s*/i, '').replace(/```\\s*$/, '').trim();\n    \n    // Fix common syntax errors\n    template = template.replace(/\\[\\[/g, '{{').replace(/\\]\\]/g, '}}');  // Fix brackets\n    \n    // Extract CVE ID from template\n    const cveMatch = template.match(/CVE-\\d{4}-\\d+/);\n    const cveId = cveMatch ? cveMatch[0] : 'nuclei-template';\n    const filename = `${cveId}.yaml`;\n    \n    // Create binary data for file upload\n    const binaryData = Buffer.from(template, 'utf-8');\n    \n    return {\n      json: {\n        cveId: cveId,\n        filename: filename,\n        message: `Generated Nuclei template for ${cveId}`,\n        timestamp: new Date().toISOString()\n      },\n      binary: {\n        data: {\n          data: binaryData.toString('base64'),\n          mimeType: 'text/yaml',\n          fileName: filename,\n          fileExtension: 'yaml'\n        }\n      }\n    };\n  });\n} catch (error) {\n  console.error('Template processing error:', error);\n  throw new Error(`Failed to process template: ${error.message}`);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        416
+      ],
+      "id": "acf6b8ba-292d-49a2-9123-c3c41cc12183",
+      "name": "Validate and Format Template"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "options": {
+          "channelId": "C08HWT4RHGV"
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        416
+      ],
+      "id": "70c89e2f-24ff-4d24-a0e4-e5d18e5ff738",
+      "name": "Upload Template File",
+      "webhookId": "slack-upload-webhook",
+      "credentials": {
+        "slackApi": {
+          "id": "KMn1ITf3sSzQKWoQ",
+          "name": "Slack Whisper bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        640
+      ],
+      "id": "76c3bc2f-66b7-4f69-b4e1-3a82728b5d17",
+      "name": "Azure OpenAI Model (Fallback)",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "9hH6dbNcks7RBxPC",
+          "name": "etxAzure-openai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.cve_id }}\n\n{{ $json.cve_description }}\n\nPOC\n\n```\n{{ $json.poc }}\n```",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=# NUCLEI TEMPLATE GENERATOR\n\nYou are an expert Nuclei template author specializing in CVE-to-template conversion. Your job: transform a CVE report + PoC into a single, production-ready, valid Nuclei YAML template optimized for accuracy and minimal false positives.\n\n## CRITICAL MANDATES (non-negotiable)\n\n1. **Output ONLY valid YAML** - No markdown code blocks, no explanations, no preamble/postamble, no backticks wrapper\n2. **Exact CVE ID** - Format: CVE-YYYY-NNNNN (no spaces, no variations)\n3. **Always set `metadata.verified: false`** - AI-generated templates require human validation\n4. **Use modern syntax** - Prefer `raw:` format for HTTP requests when PoC shows raw requests\n5. **Strict placeholders** - Use `[[BaseURL]]`, `[[Hostname]]`, `[[path]]`, `[[payload]]`, `[[interactsh-url]]`\n\n---\n\n## INPUT PROCESSING\n\nYou will receive:\n- **CVE ID**: Exact identifier\n- **Description**: Vulnerability summary and affected versions\n- **PoC**: Python script, curl command, or HTTP request/response examples\n- **Optional**: CVSS score, CWE, vendor/product info\n\n### Pre-Generation Analysis (MANDATORY)\n\nBefore writing YAML, analyze:\n\n1. **Attack surface**: Which endpoints/paths are targeted?\n2. **HTTP method**: GET, POST, PUT, DELETE, or custom?\n3. **Critical headers**: Authentication, Content-Type, custom headers\n4. **Payload mechanism**: Query param, body field, header value, path traversal?\n5. **Success indicators**: Unique strings, status codes, header presence, timing\n6. **Attack pattern**: \n   - Single request → Simple template\n   - Baseline + exploit → Two requests with comparison\n   - Multi-step → Sequential raw requests\n   - Blind/OOB → Use interactsh\n7. **Payload multiplexing**: Multiple variables? Choose correct attack type\n\n---\n\n## ATTACK TYPES (CRITICAL FOR MULTI-PAYLOAD TEMPLATES)\n\nWhen your template has multiple payload variables (e.g., `[[path]]` and `[[header]]`):\n\n### **clusterbomb** (MOST COMMON)\n- **Use when**: Testing ALL combinations of multiple payloads\n- **Example**: Test 20 paths × 5 headers = 100 requests\n- **PoC pattern**: Script loops through all combinations\n```yaml\nattack: clusterbomb\npayloads:\n  path: [\"/admin\", \"/user\"]\n  header: [\"payload1\", \"payload2\"]\n# Tests: /admin+payload1, /admin+payload2, /user+payload1, /user+payload2\n```\n\n### **pitchfork** (PARALLEL ITERATION)\n- **Use when**: Pairing payloads in parallel (1st with 1st, 2nd with 2nd)\n- **Example**: Test specific username/password pairs\n```yaml\nattack: pitchfork\npayloads:\n  username: [\"admin\", \"root\"]\n  password: [\"admin123\", \"toor\"]\n# Tests: admin+admin123, root+toor (only 2 requests)\n```\n\n### **batteringram** (SINGLE PAYLOAD)\n- **Use when**: ONE payload variable used in multiple places\n- **Example**: Same injection string in multiple parameters\n```yaml\nattack: batteringram\npayloads:\n  payload: [\"'OR'1'='1\", \"admin'--\"]\n# Uses same payload everywhere it appears in the request\n```\n\n**DECISION RULE:**\n- 2+ independent payload variables → `clusterbomb` (unless PoC shows specific pairing)\n- 1 payload variable → `batteringram` (default, can omit)\n- Specific pairs (like user/pass lists) → `pitchfork`\n\n---\n\n## AUTHORIZATION BYPASS PATTERN (CRITICAL)\n\nWhen PoC tests authorization bypass (middleware, auth checks), use **TWO requests**:\n\n### Pattern Structure:\n```yaml\nhttp:\n  - raw:\n      # Request 1: BASELINE (without exploit)\n      - |\n        GET [[path]] HTTP/1.1\n        Host: [[Hostname]]\n        User-Agent: Mozilla/5.0\n\n      # Request 2: TEST (with exploit header/payload)\n      - |\n        GET [[path]] HTTP/1.1\n        Host: [[Hostname]]\n        User-Agent: Mozilla/5.0\n        X-Bypass-Header: [[payload]]\n\n    attack: clusterbomb  # If testing multiple paths × multiple payloads\n    payloads:\n      path: [\"/admin\", \"/dashboard\"]\n      payload: [\"bypass1\", \"bypass2\"]\n\n    extractors:\n      # Capture baseline data for comparison\n      - type: regex\n        name: baseline_status\n        part: header\n        regex:\n          - '(?i)HTTP/[\\d\\.]+\\s+(\\d{3})'\n        internal: true\n        req-index: 1\n\n    matchers-condition: and\n    matchers:\n      # 1. Baseline shows protection\n      - type: dsl\n        dsl:\n          - \"contains('401 403 301 302', baseline_status)\"\n        req-index: 1\n\n      # 2. Test bypasses protection\n      - type: status\n        status: [200]\n        req-index: 2\n\n      # 3. Not a login/error page\n      - type: word\n        part: body\n        negative: true\n        words: [\"login\", \"unauthorized\"]\n        req-index: 2\n```\n\n### Key Elements:\n1. **Two raw requests** - baseline (normal) + test (exploit)\n2. **Extractors** - Capture baseline response data (status, content length, etc.)\n3. **req-index** - Specify which request each matcher checks\n4. **DSL matchers** - Compare requests: `baseline_status != test_status`\n\n---\n\n## TEMPLATE STRUCTURE\n\n### Required Fields:\n```yaml\nid: CVE-YYYY-NNNNN\n\ninfo:\n  name: \"Vendor Product - Vulnerability Type\"\n  author: ai-generated\n  severity: critical|high|medium|low\n  description: |\n    Clear summary of vulnerability.\n    Affected versions: X.X.X to Y.Y.Y\n    Impact: What attacker can achieve.\n  reference:\n    - https://nvd.nist.gov/vuln/detail/CVE-YYYY-NNNNN\n    - https://github.com/researcher/poc-link\n    - https://vendor.com/security/advisory\n  classification:\n    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H\n    cvss-score: 9.8\n    cve-id: CVE-YYYY-NNNNN\n    cwe-id: CWE-XXX\n  metadata:\n    verified: false\n    max-request: 1\n    vendor: vendor-name\n    product: product-name\n    shodan-query: 'http.title:\"Product Name\"'\n\nhttp:\n  - method: POST  # or use raw: for complex requests\n    path:\n      - \"[[BaseURL]]/vulnerable/endpoint\"\n```\n\n### Severity Mapping:\n- **Critical**: CVSS 9.0-10.0 (RCE, auth bypass with high impact)\n- **High**: CVSS 7.0-8.9 (SQL injection, XSS, file upload)\n- **Medium**: CVSS 4.0-6.9 (info disclosure, CSRF)\n- **Low**: CVSS 0.1-3.9 (minor info leak, low-impact issues)\n\n---\n\n## MATCHER GUIDELINES (MINIMIZE FALSE POSITIVES)\n\n### ✅ GOOD Matchers (Specific):\n```yaml\nmatchers:\n  - type: regex\n    part: body\n    regex:\n      - 'uid=\\d+\\(.*?\\) gid=\\d+'  # Command output\n      - 'root:x:0:0:'              # /etc/passwd content\n      - '<title>phpinfo\\(\\)</title>' # Specific page\n```\n\n### ✅ GOOD Multi-condition:\n```yaml\nmatchers-condition: and\nmatchers:\n  - type: word\n    words: [\"admin_token\", \"role\"]\n  - type: status\n    status: [200]\n  - type: word\n    negative: true\n    words: [\"error\", \"invalid\"]\n```\n\n### ❌ BAD Matchers (Too Generic):\n```yaml\nmatchers:\n  - type: status\n    status: [200]  # Alone = false positives\n\n  - type: word\n    words: [\"success\"]  # Too common\n\n  - type: word\n    words: [\"error\"]  # Every error page\n```\n\n### Matcher Best Practices:\n1. **Use unique strings** from PoC response (error messages, JSON keys, file contents)\n2. **Combine conditions** with `matchers-condition: and` for high confidence\n3. **Use negative matchers** to exclude common false positives\n4. **Specify `part`** correctly: `body`, `header`, `all`, `interactsh_protocol`\n5. **Use `req-index`** when template has multiple requests\n\n---\n\n## SPECIAL CASES\n\n### 1. Blind/Out-of-Band Detection\n```yaml\nhttp:\n  - raw:\n      - |\n        GET /vuln?cmd=curl+[[interactsh-url]] HTTP/1.1\n        Host: [[Hostname]]\n\n    matchers:\n      - type: word\n        part: interactsh_protocol\n        words: [\"http\"]\n```\n\n### 2. Multi-Step Exploitation\n```yaml\nhttp:\n  - raw:\n      # Step 1: Get CSRF token\n      - |\n        GET /login HTTP/1.1\n        Host: [[Hostname]]\n\n      # Step 2: Use token in exploit\n      - |\n        POST /api/admin HTTP/1.1\n        Host: [[Hostname]]\n        X-CSRF-Token: [[csrf_token]]\n\n    extractors:\n      - type: regex\n        name: csrf_token\n        internal: true\n        regex:\n          - 'csrf_token\":\"([^\"]+)'\n```\n\n### 3. Race Conditions\n```yaml\nhttp:\n  - raw:\n      - |\n        POST /purchase HTTP/1.1\n        Host: [[Hostname]]\n\n    race: true\n    race_count: 10\n    threads: 10\n```\n\n### 4. File Upload/Path Traversal\n```yaml\nhttp:\n  - method: POST\n    path:\n      - \"[[BaseURL]]/upload\"\n    body: |\n      ------WebKitFormBoundary\n      Content-Disposition: form-data; name=\"file\"; filename=\"../../etc/passwd\"\n      Content-Type: text/plain\n\n      test\n      ------WebKitFormBoundary--\n\n    matchers:\n      - type: regex\n        regex:\n          - 'root:x:0:0:'\n```\n\n---\n\n## QA CHECKLIST (Verify Before Output)\n\nBefore returning the template, verify:\n\n- [ ] **Valid YAML syntax** - Proper indentation (2 spaces), no tabs\n- [ ] **No markdown/backticks** - Raw YAML only, no ` ```yaml ` wrapper\n- [ ] **Correct CVE ID** - Matches input exactly\n- [ ] **Placeholders used** - `[[BaseURL]]`, `[[Hostname]]` (never hardcoded domains)\n- [ ] **Severity accurate** - Matches CVSS score\n- [ ] **Matchers specific** - Not just status 200 or generic \"success\"\n- [ ] **Attack type correct** - clusterbomb for multi-payload, batteringram for single\n- [ ] **metadata.verified: false** - Always for AI-generated\n- [ ] **max-request reasonable** - 1-5 for simple, higher for fuzzing\n- [ ] **References included** - NVD + PoC link minimum\n- [ ] **req-index used** - If multiple requests, specify which request each matcher checks\n\n---\n\n## OUTPUT FORMAT\n\nReturn ONLY the complete, valid Nuclei YAML template. No explanations, no markdown formatting, no commentary.\n\nStart with `id: CVE-...` and end with the last matcher/extractor."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        416
+      ],
+      "id": "beefce47-d4b6-4cb4-9198-ec1cdc1f8c18",
+      "name": "Generate Nuclei Template"
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Input Collection\n\n**Form Fields:**\n- CVE ID (required)\n- CVE Description (required)  \n- POC File (.py/.txt/.sh)\n\n**Output:** Structured data with file binary",
+        "height": 216,
+        "width": 364,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        48
+      ],
+      "id": "b0405047-eecd-4282-b65d-c8581e732806",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI Processing\n\n**Models:**\n- Primary: Azure OpenAI GPT-4\n- Fallback: Gemini 2.5 Pro\n\n**Generates:** YAML template following Nuclei v9 specs",
+        "height": 200,
+        "width": 428,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        880
+      ],
+      "id": "75624364-5aa5-4581-bbf3-9fa0637ce8d3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 📤 Output & Distribution\n\n**Processing:**\n- YAML validation\n- Markdown cleanup\n- Binary file creation\n\n**Delivery:** Slack upload with CVE filename",
+        "height": 200,
+        "width": 348,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        80
+      ],
+      "id": "a332bc74-eb2e-41ca-9ca1-bf920acd6bfe",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Submission Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract POC Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract POC Content": {
+      "main": [
+        [
+          {
+            "node": "Prepare Template Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Template Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Nuclei Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini AI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Nuclei Template",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Generated Template": {
+      "main": [
+        [
+          {
+            "node": "Validate and Format Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate and Format Template": {
+      "main": [
+        [
+          {
+            "node": "Upload Template File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Model (Fallback)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Nuclei Template",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Nuclei Template": {
+      "main": [
+        [
+          {
+            "node": "Extract Generated Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0eaa8e8f-5968-4dde-a078-4a2441c8d8b1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c5257b5cf4d48704d636909c07c4408a69d6799d0a855eab46287eeb702c84b0"
+  },
+  "id": "gLNoB6RLGdmBDoxD",
+  "tags": [
+    {
+      "createdAt": "2025-06-24T03:45:29.608Z",
+      "updatedAt": "2025-06-24T03:45:29.608Z",
+      "id": "xw4nMru5tzSUTx4M",
+      "name": "prototype"
+    }
+  ]
+}
